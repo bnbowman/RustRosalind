@@ -24,7 +24,10 @@ fn main() -> Result<(), std::io::Error> {
                 *counts.get_mut(&c).unwrap() += 1;
             }
         }
-        println!("{} {} {} {}", counts[&'A'],  counts[&'C'],  counts[&'G'],  counts[&'T']);
+        println!(
+            "{} {} {} {}",
+            counts[&'A'], counts[&'C'], counts[&'G'], counts[&'T']
+        );
 
         line.clear();
     }

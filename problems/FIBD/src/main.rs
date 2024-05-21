@@ -2,24 +2,22 @@ use std::env;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 
-
 fn fibd(n: usize, m: usize) -> usize {
-    let mut v: Vec<usize> = vec![0; n+2];
+    let mut v: Vec<usize> = vec![0; n + 2];
     v[0] = 0;
     v[1] = 1;
-    for i in 1..(n+1) {
+    for i in 1..(n + 1) {
         if i < m {
-            v[i+1] = v[i] + v[i-1];
+            v[i + 1] = v[i] + v[i - 1];
         } else if i == m {
-            v[i+1] = v[i] + v[i-1] - v[i-m+1];
+            v[i + 1] = v[i] + v[i - 1] - v[i - m + 1];
         } else {
-            v[i+1] = v[i] + v[i-1] - v[i-m];
+            v[i + 1] = v[i] + v[i - 1] - v[i - m];
         }
     }
     //println!("{:?}", v);
     return v[n];
 }
-
 
 fn main() -> Result<(), std::io::Error> {
     let args: Vec<String> = env::args().collect();

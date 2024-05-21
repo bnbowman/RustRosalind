@@ -2,16 +2,15 @@ use std::env;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 
-
 fn fib(n: usize, k: usize) -> usize {
     let mut v: Vec<usize> = vec![0; n];
     v[0] = 1;
     v[1] = 1;
     for i in 2..n {
-        v[i] = k * v[i-2] + v[i-1];
+        v[i] = k * v[i - 2] + v[i - 1];
     }
     //println!("{:?}", v);
-    return v[n-1];
+    return v[n - 1];
 }
 
 fn main() -> Result<(), std::io::Error> {
