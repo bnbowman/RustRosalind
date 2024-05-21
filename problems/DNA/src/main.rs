@@ -7,7 +7,6 @@ use std::collections::HashMap;
 fn main() -> Result<(), std::io::Error> {
     let args: Vec<String> = env::args().collect();
     let filepath: String = args[1].clone();
-    println!("{:?}", filepath);
 
     let file = File::open(filepath)?;
     let mut reader = BufReader::new(file);
