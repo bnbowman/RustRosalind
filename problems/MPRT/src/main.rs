@@ -1,30 +1,59 @@
 use std::env;
-use std::fs::File;
-use std::io::{BufRead, BufReader};
+use std::fs;
+use std::io::{BufReader, BufRead, Write};
 use std::str;
 
 use regex::Regex;
 
 use bio::io::fasta;
 
+/// Query the UniProt database to retreive a protein sequence, and return it
+///  as a FASTA file
+///
+/// Arguments:
+/// * `uniprot_query`: The gene or sequence name to query
+#[tokio::main]
+async fn query_unitprot(uniprot_query: &str) -> Result<String, Box<dyn std::error::Error>> {
+    let uniprot_id: &str;
+    if uniprot_query.contains('_') {
+        uniprot_id = uniprot_query.split('_').collect::<Vec<_>>().first().unwrap();
+    } else {
+        uniprot_id = uniprot_query;
+    }
+    //println!("{}", uniprot_id);
 
-fn read_fasta(filepath: &str) -> usize {
+    let rest_url = format!("{}{}{}", "https://rest.uniprot.org/uniprotkb/", uniprot_id, ".fasta");
+    let response = reqwest::get(rest_url).await?;
+    let body = response.text().await?;
+    //println!("{}", body);
+
+    let fasta_file = String::from("/tmp/uniprot.fasta");
+    let mut temp_file = fs::File::create(fasta_file.as_str()).expect("Unable to create file");
+    temp_file.write_all(body.as_bytes()).expect("Unable to write data");
+
+    Ok(fasta_file)
+}
+
+/// Search a protein sequence for N-glycosylation motifs and return their
+///  locations as a vector of integers
+///
+/// Arguments:
+/// * `fasta_file`: A fasta file containing the protein sequence to search
+fn identify_nglyco_motifs(fasta_file: &str) -> Vec<usize> {
     let nglyco: Regex = Regex::new("N[^P][ST][^P]").unwrap();
-    let mut bases = 0;
 
-    let reader = fasta::Reader::from_file(filepath).unwrap();
+    let f = fs::File::open(fasta_file).expect("Unable to open file");
+    let buf = BufReader::new(f);
+    let reader = fasta::Reader::new(buf);
     for result in reader.records() {
         let record = result.expect("Error during fasta record parsing");
 
         let seq = str::from_utf8(record.seq()).unwrap();
-        println!("{}", seq);
         let results = nglyco.find_iter(seq).map(|m| m.start() + 1).collect::<Vec<usize>>();
-        println!("{:?}", results);
-
-        bases += record.seq().len();
+        return results;
     }
 
-    return bases;
+    return Vec::<usize>::new();
 }
 
 fn main() -> Result<(), std::io::Error> {
@@ -33,9 +62,8 @@ fn main() -> Result<(), std::io::Error> {
 
     let mut filepath_parts = filepath.split("/").collect::<Vec<&str>>();
     filepath_parts.truncate(filepath_parts.len() - 1);
-    let root = filepath_parts.join("/") + "/";
 
-    let file = File::open(filepath)?;
+    let file = fs::File::open(filepath)?;
     let mut reader = BufReader::new(file);
     let mut line = String::new();
     loop {
@@ -47,11 +75,15 @@ fn main() -> Result<(), std::io::Error> {
         line.truncate(l);
 
         if line.len() > 0 {
-            let fastapath = root.clone() + line.as_str() + ".fasta";
-            let bases = read_fasta(fastapath.as_str());
-            println!(
-                "{} {}", fastapath, bases
-            );
+            let uniprot_data = query_unitprot(line.as_str()).unwrap();
+            let pos = identify_nglyco_motifs(uniprot_data.as_str());
+
+            if pos.len() > 0 {
+                let pos_str = pos.into_iter().map(|i| i.to_string() + " ").collect::<String>();
+                println!(
+                    "{}\n{}", line, pos_str
+                );
+            }
         }
 
         line.clear();
