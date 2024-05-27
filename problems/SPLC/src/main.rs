@@ -61,6 +61,62 @@ fn splice_sequence(
     return seq;
 }
 
+fn codon_to_aa(codon: &str) -> &str {
+    if ["CTA", "CTC", "CTG", "CTT", "TTA", "TTG"].contains(&codon) {
+        return "L";
+    } else if ["CGA", "CGC", "CGG", "CGT", "AGA", "AGG"].contains(&codon) {
+        return "R";
+    } else if ["TCA", "TCC", "TCG", "TCT", "AGC", "AGT"].contains(&codon) {
+        return "S";
+    } else if ["ACA", "ACC", "ACG", "ACT"].contains(&codon) {
+        return "T";
+    } else if ["CCA", "CCC", "CCG", "CCT"].contains(&codon) {
+        return "P";
+    } else if ["GCA", "GCC", "GCG", "GCT"].contains(&codon) {
+        return "A";
+    } else if ["GTA", "GTC", "GTG", "GTT"].contains(&codon) {
+        return "V";
+    } else if ["GGA", "GGC", "GGG", "GGT"].contains(&codon) {
+        return "G";
+    } else if ["ATA", "ATC", "ATT"].contains(&codon) {
+        return "I";
+    } else if ["TTC", "TTT"].contains(&codon) {
+        return "F";
+    } else if ["TAC", "TAT"].contains(&codon) {
+        return "Y";
+    } else if ["GAC", "GAT"].contains(&codon) {
+        return "D";
+    } else if ["GAG", "GAA"].contains(&codon) {
+        return "E";
+    } else if ["AAA", "AAG"].contains(&codon) {
+        return "K";
+    } else if ["AAC", "AAT"].contains(&codon) {
+        return "N";
+    } else if ["CAA", "CAG"].contains(&codon) {
+        return "Q";
+    } else if ["CAC", "CAT"].contains(&codon) {
+        return "H";
+    } else if ["TGC", "TGT"].contains(&codon) {
+        return "C";
+    } else if codon == "TGG" {
+        return "W";
+    } else if codon == "ATG" {
+        return "M";
+    }
+    return "";
+}
+
+fn translate_rna(rna: String) -> String {
+    let mut prot = String::new();
+    for i in (0..rna.len()).step_by(3) {
+        let codon = &rna[i..i+3];
+        let aa = codon_to_aa(codon);
+        prot.push_str(aa);
+        println!("{} {} {} {}", i, codon, aa, prot);
+    }
+    return prot;
+}
+
 fn main() -> Result<(), std::io::Error> {
     let args: Vec<String> = env::args().collect();
     let filepath: String = args[1].clone();
@@ -72,6 +128,8 @@ fn main() -> Result<(), std::io::Error> {
     println!("{} {} {}", template.id(), intron_seqs.len(), introns.len());
     let rna = splice_sequence(template, introns);
     println!("{}", rna);
+    let protein = translate_rna(rna);
+    println!("{}", protein);
 
     Ok(())
 }
