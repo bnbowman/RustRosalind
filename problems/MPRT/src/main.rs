@@ -3,7 +3,7 @@ use std::fs;
 use std::io::{BufReader, BufRead, Write};
 use std::str;
 
-use regex::Regex;
+//use regex::Regex;
 
 use bio::io::fasta;
 
@@ -40,7 +40,10 @@ async fn query_unitprot(uniprot_query: &str) -> Result<String, Box<dyn std::erro
 /// Arguments:
 /// * `fasta_file`: A fasta file containing the protein sequence to search
 fn identify_nglyco_motifs(fasta_file: &str) -> Vec<usize> {
-    let nglyco: Regex = Regex::new("N[^P][ST][^P]").unwrap();
+    // Base "N[^P][ST][^P]" doesn't allow for overlapping matches.
+    // Regex's like the one below would, but Rust doesn't support
+    // look-around functionality in Regexs yet
+    //let nglyco: Regex = Regex::new("(?=(N[^P][ST][^P]))").unwrap();
 
     let f = fs::File::open(fasta_file).expect("Unable to open file");
     let buf = BufReader::new(f);
@@ -49,7 +52,14 @@ fn identify_nglyco_motifs(fasta_file: &str) -> Vec<usize> {
         let record = result.expect("Error during fasta record parsing");
 
         let seq = str::from_utf8(record.seq()).unwrap();
-        let results = nglyco.find_iter(seq).map(|m| m.start() + 1).collect::<Vec<usize>>();
+        let seq_len = seq.len() as usize;
+        let mut results: Vec<usize> = vec![];
+        for i in 0..(seq_len-4) {
+            if seq[i..i+1] == *"N" && seq[i+1..i+2] != *"P" && (seq[i+2..i+3] == *"S" || seq[i+2..i+3] == *"T") && seq[i+3..i+4] != *"P" {
+                results.push(i+1);
+            }
+        }
+        //let results = nglyco.find_iter(seq).map(|m| m.start() + 1).collect::<Vec<usize>>();
         return results;
     }
 
