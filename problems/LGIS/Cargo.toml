@@ -1,0 +1,6 @@
+[package]
+name = "LGIS"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
