@@ -34,7 +34,10 @@ fn main() -> Result<(), std::io::Error> {
             break;
         }
 
-        let counts: Vec<u32> = line.split_whitespace().map(|x| x.parse::<u32>().unwrap()).collect();
+        let counts: Vec<u32> = line
+            .split_whitespace()
+            .map(|x| x.parse::<u32>().unwrap())
+            .collect();
         println!("{}", iev(counts));
 
         line.clear();

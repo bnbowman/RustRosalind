@@ -22,7 +22,7 @@ static DNA_CODON_TABLE: phf::Map<&'static str, &'static str> = phf_map! {
     "GTC" => "V",
     "GTA" => "V",
     "GTG" => "V",
-    
+
     "TCT" => "S",
     "TCC" => "S",
     "TCA" => "S",
@@ -39,7 +39,7 @@ static DNA_CODON_TABLE: phf::Map<&'static str, &'static str> = phf_map! {
     "GCC" => "A",
     "GCA" => "A",
     "GCG" => "A",
-    
+
     "TAT" => "Y",
     "TAC" => "Y",
     "TAA" => "",
@@ -56,7 +56,7 @@ static DNA_CODON_TABLE: phf::Map<&'static str, &'static str> = phf_map! {
     "GAC" => "D",
     "GAA" => "E",
     "GAG" => "E",
-    
+
     "TGT" => "C",
     "TGC" => "C",
     "TGA" => "",
@@ -82,9 +82,7 @@ static DNA_CODON_TABLE: phf::Map<&'static str, &'static str> = phf_map! {
 /// * `fasta_file`: A fasta file containing the protein sequence to search
 fn read_fasta(fasta_file: &str) -> Vec<bio::io::fasta::Record> {
     let reader = fasta::Reader::from_file(fasta_file).expect("Unable to open fasta file");
-    return reader.records()
-        .filter_map(|r| r.ok())
-        .collect::<Vec<_>>();
+    return reader.records().filter_map(|r| r.ok()).collect::<Vec<_>>();
 }
 
 fn find_introns(
@@ -107,23 +105,17 @@ fn find_introns(
     return retval;
 }
 
-fn splice_sequence(
-    template: &bio::io::fasta::Record,
-    introns: Vec<(usize, usize)>,
-) -> String {
-    let regions: Vec<_> = introns
-        .into_iter()
-        .rev()
-        .collect();
+fn splice_sequence(template: &bio::io::fasta::Record, introns: Vec<(usize, usize)>) -> String {
+    let regions: Vec<_> = introns.into_iter().rev().collect();
     //println!("{:?}", regions);
-    
+
     let mut seq = String::from_utf8(template.seq().to_vec()).unwrap();
     let mut len = seq.len();
     for r in regions {
         let start = r.0;
         let end = r.1;
         let pre = seq[0..start].to_owned();
-        //let i = seq[start..end].to_owned(); 
+        //let i = seq[start..end].to_owned();
         let post = seq[end..len].to_owned();
         seq = format!("{}{}", pre, post);
         len = seq.len();
@@ -135,12 +127,12 @@ fn splice_sequence(
 fn translate_rna(rna: String) -> String {
     let mut prot = String::new();
     for i in (0..rna.len()).step_by(3) {
-        let codon = &rna[i..i+3];
+        let codon = &rna[i..i + 3];
         let optional = DNA_CODON_TABLE.get(codon);
         match optional {
             Some(aa) => {
                 prot.push_str(aa);
-            },
+            }
             None => println!("'{}' is not a valid codon!", codon),
         }
         //println!("{} {} {}", i, codon, prot);

@@ -1,6 +1,6 @@
 use std::env;
 use std::fs;
-use std::io::{BufReader, BufRead, Write};
+use std::io::{BufRead, BufReader, Write};
 use std::str;
 
 //use regex::Regex;
@@ -16,20 +16,29 @@ use bio::io::fasta;
 async fn query_unitprot(uniprot_query: &str) -> Result<String, Box<dyn std::error::Error>> {
     let uniprot_id: &str;
     if uniprot_query.contains('_') {
-        uniprot_id = uniprot_query.split('_').collect::<Vec<_>>().first().unwrap();
+        uniprot_id = uniprot_query
+            .split('_')
+            .collect::<Vec<_>>()
+            .first()
+            .unwrap();
     } else {
         uniprot_id = uniprot_query;
     }
     //println!("{}", uniprot_id);
 
-    let rest_url = format!("{}{}{}", "https://rest.uniprot.org/uniprotkb/", uniprot_id, ".fasta");
+    let rest_url = format!(
+        "{}{}{}",
+        "https://rest.uniprot.org/uniprotkb/", uniprot_id, ".fasta"
+    );
     let response = reqwest::get(rest_url).await?;
     let body = response.text().await?;
     //println!("{}", body);
 
     let fasta_file = String::from("/tmp/uniprot.fasta");
     let mut temp_file = fs::File::create(fasta_file.as_str()).expect("Unable to create file");
-    temp_file.write_all(body.as_bytes()).expect("Unable to write data");
+    temp_file
+        .write_all(body.as_bytes())
+        .expect("Unable to write data");
 
     Ok(fasta_file)
 }
@@ -54,9 +63,13 @@ fn identify_nglyco_motifs(fasta_file: &str) -> Vec<usize> {
         let seq = str::from_utf8(record.seq()).unwrap();
         let seq_len = seq.len() as usize;
         let mut results: Vec<usize> = vec![];
-        for i in 0..(seq_len-4) {
-            if seq[i..i+1] == *"N" && seq[i+1..i+2] != *"P" && (seq[i+2..i+3] == *"S" || seq[i+2..i+3] == *"T") && seq[i+3..i+4] != *"P" {
-                results.push(i+1);
+        for i in 0..(seq_len - 4) {
+            if seq[i..i + 1] == *"N"
+                && seq[i + 1..i + 2] != *"P"
+                && (seq[i + 2..i + 3] == *"S" || seq[i + 2..i + 3] == *"T")
+                && seq[i + 3..i + 4] != *"P"
+            {
+                results.push(i + 1);
             }
         }
         //let results = nglyco.find_iter(seq).map(|m| m.start() + 1).collect::<Vec<usize>>();
@@ -89,10 +102,11 @@ fn main() -> Result<(), std::io::Error> {
             let pos = identify_nglyco_motifs(uniprot_data.as_str());
 
             if pos.len() > 0 {
-                let pos_str = pos.into_iter().map(|i| i.to_string() + " ").collect::<String>();
-                println!(
-                    "{}\n{}", line, pos_str
-                );
+                let pos_str = pos
+                    .into_iter()
+                    .map(|i| i.to_string() + " ")
+                    .collect::<String>();
+                println!("{}\n{}", line, pos_str);
             }
         }
 
